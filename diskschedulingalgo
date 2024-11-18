@@ -1,0 +1,139 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cmath>
+
+using namespace std;
+
+// Function to calculate total head movement for SSTF (Shortest Seek Time First)
+int sstf(vector<int> requests, int head) {
+    int total_movement = 0;
+    int n = requests.size();
+    vector<bool> visited(n, false);
+
+    for (int i = 0; i < n; i++) {
+        int min_dist = INT_MAX, min_index = -1;
+
+        // Find the closest request to the current head position
+        for (int j = 0; j < n; j++) {
+            if (!visited[j] && abs(head - requests[j]) < min_dist) {
+                min_dist = abs(head - requests[j]);
+                min_index = j;
+            }
+        }
+
+        total_movement += min_dist;
+        head = requests[min_index];
+        visited[min_index] = true;
+        cout << "SSTF: Moved to " << head << " (distance: " << min_dist << ")" << endl;
+    }
+
+    return total_movement;
+}
+
+// Function to calculate total head movement for SCAN (Elevator Algorithm)
+int scan(vector<int> requests, int head, int disk_size, bool direction_up) {
+    int total_movement = 0;
+    vector<int> left, right;
+    
+    // Add requests to the left and right of the head
+    if (direction_up) {
+        right.push_back(disk_size - 1);  // Move to the end of the disk
+    } else {
+        left.push_back(0);  // Move to the start of the disk
+    }
+    
+    for (int i = 0; i < requests.size(); i++) {
+        if (requests[i] < head) left.push_back(requests[i]);
+        else right.push_back(requests[i]);
+    }
+    
+    sort(left.begin(), left.end());
+    sort(right.begin(), right.end());
+    
+    // Scan upwards or downwards, depending on the initial direction
+    if (direction_up) {
+        for (int i = 0; i < right.size(); i++) {
+            total_movement += abs(head - right[i]);
+            cout << "SCAN: Moved to " << right[i] << " (distance: " << abs(head - right[i]) << ")" << endl;
+            head = right[i];
+        }
+        for (int i = left.size() - 1; i >= 0; i--) {
+            total_movement += abs(head - left[i]);
+            cout << "SCAN: Moved to " << left[i] << " (distance: " << abs(head - left[i]) << ")" << endl;
+            head = left[i];
+        }
+    } else {
+        for (int i = left.size() - 1; i >= 0; i--) {
+            total_movement += abs(head - left[i]);
+            cout << "SCAN: Moved to " << left[i] << " (distance: " << abs(head - left[i]) << ")" << endl;
+            head = left[i];
+        }
+        for (int i = 0; i < right.size(); i++) {
+            total_movement += abs(head - right[i]);
+            cout << "SCAN: Moved to " << right[i] << " (distance: " << abs(head - right[i]) << ")" << endl;
+            head = right[i];
+        }
+    }
+
+    return total_movement;
+}
+
+// Function to calculate total head movement for C-LOOK (Circular LOOK)
+int c_look(vector<int> requests, int head) {
+    int total_movement = 0;
+    vector<int> left, right;
+
+    // Add requests to the left and right of the head
+    for (int i = 0; i < requests.size(); i++) {
+        if (requests[i] < head) left.push_back(requests[i]);
+        else right.push_back(requests[i]);
+    }
+    
+    sort(left.begin(), left.end());
+    sort(right.begin(), right.end());
+    
+    // Move upwards, then wrap around and go to the start of the disk
+    for (int i = 0; i < right.size(); i++) {
+        total_movement += abs(head - right[i]);
+        cout << "C-LOOK: Moved to " << right[i] << " (distance: " << abs(head - right[i]) << ")" << endl;
+        head = right[i];
+    }
+    if (!left.empty()) {
+        total_movement += abs(head - left[0]);  // Jump to the start
+        cout << "C-LOOK: Moved to " << left[0] << " (distance: " << abs(head - left[0]) << ")" << endl;
+        head = left[0];
+    }
+    for (int i = 1; i < left.size(); i++) {
+        total_movement += abs(head - left[i]);
+        cout << "C-LOOK: Moved to " << left[i] << " (distance: " << abs(head - left[i]) << ")" << endl;
+        head = left[i];
+    }
+
+    return total_movement;
+}
+
+int main() {
+    // Hardcoded values
+    vector<int> requests = {95, 180, 34, 119, 11, 123, 62, 64}; // Disk requests
+    int head = 50;           // Initial head position
+    int disk_size = 200;     // Maximum cylinder number
+    bool direction_up = true; // Initial head movement direction (1 for up, 0 for down)
+
+    // SSTF Algorithm
+    cout << "--- SSTF Disk Scheduling ---" << endl;
+    int sstf_movement = sstf(requests, head);
+    cout << "Total head movement for SSTF: " << sstf_movement << endl;
+
+    // SCAN Algorithm
+    cout << "\n--- SCAN Disk Scheduling ---" << endl;
+    int scan_movement = scan(requests, head, disk_size, direction_up);
+    cout << "Total head movement for SCAN: " << scan_movement << endl;
+
+    // C-LOOK Algorithm
+    cout << "\n--- C-LOOK Disk Scheduling ---" << endl;
+    int c_look_movement = c_look(requests, head);
+    cout << "Total head movement for C-LOOK: " << c_look_movement << endl;
+
+    return 0;
+}
