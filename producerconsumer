@@ -1,0 +1,79 @@
+        OS ASSIGNMENT NO.6
+Name: Vaishnavi Shivade
+Div: AI C
+Roll Number: 55
+
+#include <iostream>
+#include <thread>
+#include <mutex>
+#include <chrono>
+
+using namespace std;
+
+mutex mtx;           // lock critical sections
+mutex wrt;           //  ensure writers get exclusive access
+int reader_count = 0; // Number of active readers
+
+void reader(int id) {
+    while (true) {
+        this_thread::sleep_for(chrono::milliseconds(1000)); // Simulate some delay
+
+        mtx.lock(); // Lock mutex 
+        reader_count++;
+        if (reader_count == 1) { // If first reader, lock the writing mutex
+            wrt.lock();
+        }
+        mtx.unlock(); // Unlock mutex after updating reader count
+
+        // Reading section (Critical section for readers)
+        cout << "Reader " << id << " is reading.\n";
+        this_thread::sleep_for(chrono::milliseconds(1000)); // Simulate reading
+
+        // Exit reading section
+        mtx.lock(); // Lock mutex to update reader count safely
+        reader_count--;
+        if (reader_count == 0) { // If no more readers, unlock the writing mutex
+            wrt.unlock();
+        }
+        mtx.unlock(); // Unlock mutex after updating reader count
+    }
+}
+
+void writer(int id) {
+    while (true) {
+        this_thread::sleep_for(chrono::milliseconds(2000)); // Simulate some delay
+
+        wrt.lock(); // Lock writing mutex for exclusive access
+
+        // Writing section (Critical section for writers)
+        cout << "Writer " << id << " is writing.\n";
+        this_thread::sleep_for(chrono::milliseconds(1500)); // Simulate writing
+
+        wrt.unlock(); // Unlock writing mutex
+    }
+}
+
+int main() {
+    thread readers[5], writers[3];
+
+    // Creating readers
+    for (int i = 0; i < 5; ++i) {
+        readers[i] = thread(reader, i + 1);
+    }
+
+    // Creating writers
+    for (int i = 0; i < 3; ++i) {
+        writers[i] = thread(writer, i + 1);
+    }
+
+    // Joining threads (to make sure they run continuously)
+    for (int i = 0; i < 5; ++i) {
+        readers[i].join();
+    }
+
+    for (int i = 0; i < 3; ++i) {
+        writers[i].join();
+    }
+
+    return 0;
+}
