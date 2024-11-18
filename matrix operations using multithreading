@@ -1,0 +1,117 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+
+#define MATRIX_SIZE 4  // Size of the matrix
+#define NUM_THREADS 4  // Number of threads
+
+int matrixA[MATRIX_SIZE][MATRIX_SIZE];
+int matrixB[MATRIX_SIZE][MATRIX_SIZE];
+int matrixSum[MATRIX_SIZE][MATRIX_SIZE];
+int matrixProduct[MATRIX_SIZE][MATRIX_SIZE];
+
+// Thread data structure
+typedef struct {
+    int start_row;
+    int end_row;
+} ThreadData;
+
+// Matrix addition function
+void *matrix_addition(void *arg) {
+    ThreadData *data = (ThreadData *)arg;
+    int start_row = data->start_row;
+    int end_row = data->end_row;
+
+    for (int i = start_row; i < end_row; ++i) {
+        for (int j = 0; j < MATRIX_SIZE; ++j) {
+            matrixSum[i][j] = matrixA[i][j] + matrixB[i][j];
+        }
+    }
+    pthread_exit(NULL);
+}
+
+// Matrix multiplication function
+void *matrix_multiplication(void *arg) {
+    ThreadData *data = (ThreadData *)arg;
+    int start_row = data->start_row;
+    int end_row = data->end_row;
+
+    for (int i = start_row; i < end_row; ++i) {
+        for (int j = 0; j < MATRIX_SIZE; ++j) {
+            matrixProduct[i][j] = 0;
+            for (int k = 0; k < MATRIX_SIZE; ++k) {
+                matrixProduct[i][j] += matrixA[i][k] * matrixB[k][j];
+            }
+        }
+    }
+    pthread_exit(NULL);
+}
+
+// Function to print a matrix
+void print_matrix(int matrix[MATRIX_SIZE][MATRIX_SIZE]) {
+    for (int i = 0; i < MATRIX_SIZE; ++i) {
+        for (int j = 0; j < MATRIX_SIZE; ++j) {
+            printf("%d ", matrix[i][j]);
+        }
+        printf("\n");
+    }
+}
+
+int main() {
+    pthread_t threads[NUM_THREADS];
+    ThreadData thread_data[NUM_THREADS];
+
+    // Initialize matrices
+    for (int i = 0; i < MATRIX_SIZE; ++i) {
+        for (int j = 0; j < MATRIX_SIZE; ++j) {
+            matrixA[i][j] = i + j + 1;
+            matrixB[i][j] = (i + 1) * (j + 1);
+        }
+    }
+
+    printf("Matrix A:\n");
+    print_matrix(matrixA);
+    printf("\nMatrix B:\n");
+    print_matrix(matrixB);
+
+    int rows_per_thread = MATRIX_SIZE / NUM_THREADS;
+
+    // Perform matrix addition
+    for (int i = 0; i < NUM_THREADS; ++i) {
+        thread_data[i].start_row = i * rows_per_thread;
+        thread_data[i].end_row = (i == NUM_THREADS - 1) ? MATRIX_SIZE : (i + 1) * rows_per_thread;
+
+        if (pthread_create(&threads[i], NULL, matrix_addition, (void *)&thread_data[i])) {
+            fprintf(stderr, "Error creating thread for addition\n");
+            return 1;
+        }
+    }
+    for (int i = 0; i < NUM_THREADS; ++i) {
+        if (pthread_join(threads[i], NULL)) {
+            fprintf(stderr, "Error joining thread for addition\n");
+            return 2;
+        }
+    }
+
+    printf("\nMatrix Sum (A + B):\n");
+    print_matrix(matrixSum);
+
+    // Perform matrix multiplication
+    for (int i = 0; i < NUM_THREADS; ++i) {
+        if (pthread_create(&threads[i], NULL, matrix_multiplication, (void *)&thread_data[i])) {
+            fprintf(stderr, "Error creating thread for multiplication\n");
+            return 1;
+        }
+    }
+    for (int i = 0; i < NUM_THREADS; ++i) {
+        if (pthread_join(threads[i], NULL)) {
+            fprintf(stderr, "Error joining thread for multiplication\n");
+            return 2;
+        }
+    }
+
+    printf("\nMatrix Product (A x B):\n");
+    print_matrix(matrixProduct);
+
+    return 0;
+}
