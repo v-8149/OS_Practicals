@@ -1,0 +1,138 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <algorithm>
+using namespace std;
+
+// Structure to store address book records
+struct Record {
+    string name;
+    int id;
+    string phone;
+    string address;
+    string email;
+};
+
+// Function to create the address book
+void createAddressBook(vector<Record> &addressBook) {
+    addressBook.clear();
+    cout << "Address book created successfully!\n";
+}
+
+// Function to view all records in the address book
+void viewAddressBook(const vector<Record> &addressBook) {
+    if (addressBook.empty()) {
+        cout << "Address book is empty!\n";
+        return;
+    }
+    for (size_t i = 0; i < addressBook.size(); ++i) {
+        cout << "Record " << i + 1 << ": \n";
+        cout << "Name: " << addressBook[i].name << "\n";
+        cout << "ID: " << addressBook[i].id << "\n";
+        cout << "Phone: " << addressBook[i].phone << "\n";
+        cout << "Address: " << addressBook[i].address << "\n";
+        cout << "Email: " << addressBook[i].email << "\n\n";
+    }
+}
+
+// Function to insert a new record
+void insertRecord(vector<Record> &addressBook) {
+    Record newRecord;
+    cout << "Enter Name: ";
+    cin.ignore();
+    getline(cin, newRecord.name);
+    cout << "Enter ID: ";
+    cin >> newRecord.id;
+    cout << "Enter Phone: ";
+    cin >> newRecord.phone;
+    cin.ignore();
+    cout << "Enter Address: ";
+    getline(cin, newRecord.address);
+    cout << "Enter Email: ";
+    cin >> newRecord.email;
+    addressBook.push_back(newRecord);
+    cout << "Record added successfully!\n";
+}
+
+// Function to delete a record
+void deleteRecord(vector<Record> &addressBook) {
+    int id;
+    cout << "Enter ID of the record to delete: ";
+    cin >> id;
+    auto it = remove_if(addressBook.begin(), addressBook.end(), [id](const Record &r) {
+        return r.id == id;
+    });
+    if (it != addressBook.end()) {
+        addressBook.erase(it, addressBook.end());
+        cout << "Record deleted successfully!\n";
+    } else {
+        cout << "Record not found!\n";
+    }
+}
+
+// Function to modify a record
+void modifyRecord(vector<Record> &addressBook) {
+    int id;
+    cout << "Enter ID of the record to modify: ";
+    cin >> id;
+    for (auto &record : addressBook) {
+        if (record.id == id) {
+            cout << "Modify details for ID: " << id << "\n";
+            cout << "Enter New Name: ";
+            cin.ignore();
+            getline(cin, record.name);
+            cout << "Enter New Phone: ";
+            cin >> record.phone;
+            cin.ignore();
+            cout << "Enter New Address: ";
+            getline(cin, record.address);
+            cout << "Enter New Email: ";
+            cin >> record.email;
+            cout << "Record modified successfully!\n";
+            return;
+        }
+    }
+    cout << "Record not found!\n";
+}
+
+// Main function
+int main() {
+    vector<Record> addressBook;
+    int choice;
+    do {
+        cout << "\nAddress Book Menu:\n";
+        cout << "1. Create Address Book\n";
+        cout << "2. View Address Book\n";
+        cout << "3. Insert a Record\n";
+        cout << "4. Delete a Record\n";
+        cout << "5. Modify a Record\n";
+        cout << "6. Exit\n";
+        cout << "Enter your choice: ";
+        cin >> choice;
+
+        switch (choice) {
+            case 1:
+                createAddressBook(addressBook);
+                break;
+            case 2:
+                viewAddressBook(addressBook);
+                break;
+            case 3:
+                insertRecord(addressBook);
+                break;
+            case 4:
+                deleteRecord(addressBook);
+                break;
+            case 5:
+                modifyRecord(addressBook);
+                break;
+            case 6:
+                cout << "Exiting Address Book Program. Goodbye!\n";
+                break;
+            default:
+                cout << "Invalid choice! Please try again.\n";
+        }
+    } while (choice != 6);
+
+    return 0;
+}
